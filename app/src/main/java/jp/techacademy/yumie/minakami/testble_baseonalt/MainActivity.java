@@ -2,10 +2,12 @@ package jp.techacademy.yumie.minakami.testble_baseonalt;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.RemoteException;
 import android.os.Bundle;
+import android.support.v4.content.PermissionChecker;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
@@ -20,6 +22,8 @@ import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
 import java.util.Collection;
+
+import static android.R.attr.targetSdkVersion;
 
 
 public class MainActivity extends AppCompatActivity  implements BeaconConsumer{
@@ -43,16 +47,37 @@ public class MainActivity extends AppCompatActivity  implements BeaconConsumer{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Android6以降のパーミッション確認
-        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M )
-        {
-            // 許可されていない場合
-            if( this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED )
-            {
-                // ユーザーに許可を求める
-                requestPermissions( new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},PERMISSION_REQUEST_COARSE_LOCATION );
+        try {
+            final PackageInfo info = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
+            int targetSdkVersion = info.applicationInfo.targetSdkVersion;
+        }
+        catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
+            if(targetSdkVersion >= Build.VERSION_CODES.M ) {
+                // 許可されていない場合
+                if( this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ) {
+                    // ユーザーに許可を求める
+                    requestPermissions( new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},PERMISSION_REQUEST_COARSE_LOCATION );
+                }
+            } else {
+                if(PermissionChecker.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ){
+                }
             }
         }
+
+//        // Android6以降のパーミッション確認
+//        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M )
+//        {
+//            // 許可されていない場合
+//            if( this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED )
+//            {
+//                // ユーザーに許可を求める
+//                requestPermissions( new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},PERMISSION_REQUEST_COARSE_LOCATION );
+//            }
+//        }
 
         // ビーコン・マネージャーの初期化
         beaconManager = BeaconManager.getInstanceForApplication( this );
